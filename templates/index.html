@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>ReelFeel — IMDB Sentiment Analyzer</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e5eaf2;
+      --surface: #ffffff;
+      --bg: #f4f7fb;
+      --navy: #101827;
+      --blue: #4169e1;
+      --blue-dark: #2f50c7;
+      --green: #16845b;
+      --green-bg: #e8f7ef;
+      --red: #c2414b;
+      --red-bg: #fff0f0;
+      --shadow: 0 20px 60px rgba(24, 39, 75, .09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(65, 105, 225, .10), transparent 28rem),
+        radial-gradient(circle at 100% 20%, rgba(22, 132, 91, .07), transparent 25rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    .topbar {
+      background: var(--navy);
+      color: white;
+    }
+
+    .topbar-inner {
+      width: min(1120px, calc(100% - 40px));
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 76px;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      font-size: 1.2rem;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #6d8bff, #4169e1);
+      box-shadow: 0 6px 20px #4169e155;
+      font-size: 1.15rem;
+    }
+
+    .brand small {
+      display: block;
+      color: #b9c5da;
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #d6e2f5;
+      font-size: .85rem;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #44d49a;
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px #44d49a22;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 40px));
+      margin: 48px auto 64px;
+    }
+
+    .hero {
+      max-width: 760px;
+      margin: 0 auto 32px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .13em;
+      font-size: .75rem;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+      margin: 12px 0 16px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 1.08rem;
+      max-width: 650px;
+      margin: auto;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 24px 26px 0;
+    }
+
+    .card-head h2 {
+      margin: 0 0 6px;
+      font-size: 1.15rem;
+      letter-spacing: -.02em;
+    }
+
+    .card-head p {
+      color: var(--muted);
+      margin: 0;
+      font-size: .92rem;
+    }
+
+    .form-body {
+      padding: 22px 26px 26px;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: .9rem;
+      font-weight: 750;
+      margin-bottom: 10px;
+    }
+
+    .counter {
+      color: #8a94a6;
+      font-weight: 500;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 230px;
+      resize: vertical;
+      padding: 16px;
+      border: 1px solid #d9e0ec;
+      border-radius: 14px;
+      outline: none;
+      color: var(--ink);
+      background: #fbfcff;
+      font: inherit;
+      line-height: 1.65;
+      transition: border .2s, box-shadow .2s;
+    }
+
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px #4169e11a;
+      background: white;
+    }
+
+    textarea::placeholder {
+      color: #9aa4b5;
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 13px 0 20px;
+    }
+
+    .example {
+      border: 1px solid #dfe6f2;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #fff;
+      color: #56637a;
+      font: inherit;
+      font-size: .78rem;
+      cursor: pointer;
+      transition: .18s;
+    }
+
+    .example:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: #f5f7ff;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 18px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .15s, background .15s;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+      flex: 1;
+      box-shadow: 0 8px 18px #4169e12e;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dark);
+    }
+
+    .btn-secondary {
+      background: #f0f3f8;
+      color: #48546a;
+    }
+
+    .btn-secondary:hover {
+      background: #e5eaf2;
+    }
+
+    .hint {
+      margin: 15px 0 0;
+      color: #8a94a6;
+      font-size: .78rem;
+    }
+
+    .alert {
+      margin: 0 26px 22px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      background: #fff5e8;
+      color: #8a4d0c;
+      border: 1px solid #f7dfbd;
+      font-size: .9rem;
+    }
+
+    .result-card {
+      padding-bottom: 24px;
+    }
+
+    .result-inner {
+      padding: 22px 26px 0;
+    }
+
+    .empty-state {
+      margin: 22px 26px 26px;
+      min-height: 285px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 26px;
+      border: 1px dashed #d6deeb;
+      border-radius: 17px;
+      background: #fafcff;
+    }
+
+    .empty-icon {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      border-radius: 20px;
+      background: #edf2ff;
+      font-size: 1.65rem;
+      margin-bottom: 14px;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 7px;
+      font-size: 1.05rem;
+    }
+
+    .empty-state p {
+      max-width: 260px;
+      color: var(--muted);
+      font-size: .88rem;
+      margin: 0;
+    }
+
+    .result-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: .8rem;
+      font-weight: 800;
+    }
+
+    .result-label.positive {
+      color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .result-label.negative {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+
+    .result-title {
+      margin: 16px 0 4px;
+      font-size: 2rem;
+      letter-spacing: -.04em;
+    }
+
+    .result-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .confidence-box {
+      margin-top: 25px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 16px;
+    }
+
+    .confidence-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: .85rem;
+      font-weight: 750;
+      margin-bottom: 10px;
+    }
+
+    .track {
+      height: 9px;
+      background: #edf0f6;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #6382f4, #4169e1);
+    }
+
+    .scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 13px;
+    }
+
+    .score {
+      padding: 12px;
+      border-radius: 12px;
+      background: #f7f9fc;
+    }
+
+    .score span {
+      display: block;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .score strong {
+      font-size: 1.2rem;
+    }
+
+    .explanation {
+      margin-top: 16px;
+      padding: 15px;
+      border-radius: 13px;
+      background: #f3f6ff;
+      border: 1px solid #e2e9ff;
+    }
+
+    .explanation h3 {
+      font-size: .88rem;
+      margin: 0 0 5px;
+    }
+
+    .explanation p {
+      color: #53617b;
+      font-size: .84rem;
+      margin: 0;
+    }
+
+    .review-preview {
+      margin-top: 16px;
+      padding: 14px;
+      background: #fafbfe;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .review-preview strong {
+      display: block;
+      font-size: .77rem;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: #7b879a;
+      margin-bottom: 6px;
+    }
+
+    .review-preview p {
+      margin: 0;
+      font-size: .86rem;
+      color: #48546a;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .below {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    .feature {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #ffffffc9;
+    }
+
+    .feature-icon {
+      font-size: 1.25rem;
+    }
+
+    .feature h3 {
+      font-size: .92rem;
+      margin: 10px 0 5px;
+    }
+
+    .feature p {
+      font-size: .82rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .disclaimer {
+      color: #818b9c;
+      text-align: center;
+      font-size: .78rem;
+      max-width: 760px;
+      margin: 24px auto 0;
+    }
+
+    footer {
+      border-top: 1px solid #e4e9f1;
+      padding: 22px 20px;
+      text-align: center;
+      color: #8993a3;
+      font-size: .8rem;
+    }
+
+    @media (max-width: 820px) {
+      main {
+        margin-top: 32px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .below {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+
+      .topbar-inner,
+      main {
+        width: min(100% - 24px, 1120px);
+      }
+
+      .topbar-inner {
+        min-height: 66px;
+      }
+
+      .hero {
+        margin-bottom: 24px;
+      }
+
+      .card-head {
+        padding: 21px 19px 0;
+      }
+
+      .form-body,
+      .result-inner {
+        padding-left: 19px;
+        padding-right: 19px;
+      }
+
+      .empty-state {
+        margin-left: 19px;
+        margin-right: 19px;
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-primary {
+        min-height: 48px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">▶</div>
+        <div>ReelFeel<small>Movie review intelligence</small></div>
+      </div>
+      <div class="status">
+        <span class="dot" aria-hidden="true"></span>
+        {% if model_ready %}Sentiment model ready{% else %}Model setup required{% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Powered by deep learning</div>
+      <h1>Understand the feeling<br>behind a movie review.</h1>
+      <p>Enter a review and let an LSTM sentiment model estimate whether its overall tone is positive or negative.</p>
+    </section>
+
+    <section class="layout" aria-label="Sentiment analysis workspace">
+      <article class="card">
+        <div class="card-head">
+          <h2>Analyze a review</h2>
+          <p>Paste a review or try one of the examples below.</p>
+        </div>
+        <form method="POST" action="/" class="form-body" id="reviewForm">
+          <label for="review">
+            Your movie review
+            <span class="counter" id="counter">0 / 10000</span>
+          </label>
+          <textarea id="review" name="review" maxlength="10000"
+            placeholder="Example: The story was gripping, the performances were brilliant, and I would happily watch it again..."
+            required>{{ review }}</textarea>
+          <div class="examples" aria-label="Example reviews">
+            <button class="example" type="button"
+              data-review="A wonderful film with a clever story, excellent acting, and a truly moving ending.">✨
+              Positive example</button>
+            <button class="example" type="button"
+              data-review="The plot was dull, the dialogue was awkward, and I regretted watching this movie.">↘ Negative
+              example</button>
+            <button class="example" type="button"
+              data-review="The movie had some good moments, but the pacing was slow and the ending felt rushed.">◐ Mixed
+              example</button>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit" {% if not model_ready %}disabled{% endif %}>Analyze sentiment
+              <span aria-hidden="true">→</span></button>
+            <button class="btn btn-secondary" type="button" id="clearBtn">Clear</button>
+          </div>
+          <p class="hint">Tip: A few complete sentences usually provide more context than a single word.</p>
+        </form>
+        {% if error %}
+        <div class="alert" role="alert">{{ error }}</div>
+        {% endif %}
+        {% if load_error %}
+        <div class="alert" role="alert">Setup detail: {{ load_error }}</div>
+        {% endif %}
+      </article>
+
+      <article class="card result-card" aria-live="polite">
+        <div class="card-head">
+          <h2>Analysis result</h2>
+          <p>Your prediction, with a simple explanation.</p>
+        </div>
+
+        {% if result %}
+        <div class="result-inner">
+          <span class="result-label {{ 'positive' if result.label == 'Positive' else 'negative' }}">
+            <span aria-hidden="true">{{ '✓' if result.label == 'Positive' else '!' }}</span>
+            {{ result.label }} sentiment
+          </span>
+          <h3 class="result-title">{{ result.label }}</h3>
+          <p class="result-copy">The model classified this review as {{ result.label|lower }}.</p>
+
+          <div class="confidence-box">
+            <div class="confidence-top">
+              <span>Score for predicted class</span>
+              <strong>{{ result.confidence_pct }}%</strong>
+            </div>
+            <div class="track" role="img" aria-label="Predicted class score {{ result.confidence_pct }} percent">
+              <div class="fill" data-confidence="{{ result.confidence_pct }}"></div>
+            </div>
+            <div class="scores">
+              <div class="score">
+                <span>Positive score</span>
+                <strong>{{ result.positive_pct }}%</strong>
+              </div>
+              <div class="score">
+                <span>Negative score</span>
+                <strong>{{ result.negative_pct }}%</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="explanation">
+            <h3>How to read this result</h3>
+            <p>{{ result.explanation }} The scores are model outputs, not a guarantee that the interpretation is
+              correct.</p>
+          </div>
+
+          <div class="review-preview">
+            <strong>Review analyzed</strong>
+            <p>{{ review }}</p>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon" aria-hidden="true">◎</div>
+          <h3>Your result will appear here</h3>
+          <p>Submit a movie review to see its predicted sentiment and the model's positive and negative scores.</p>
+        </div>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="below" aria-label="About the analysis">
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">🧠</div>
+        <h3>LSTM deep learning</h3>
+        <p>A recurrent neural network processes the review as a sequence of tokens to estimate sentiment.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">📊</div>
+        <h3>Readable scores</h3>
+        <p>Positive and negative scores help you understand which class the model favored.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" aria-hidden="true">🔎</div>
+        <h3>Transparent decision rule</h3>
+        <p>The app uses a 0.50 threshold on the model's positive output to choose a label.</p>
+      </div>
+    </section>
+
+    <p class="disclaimer">
+      This is an educational sentiment-analysis demo trained on IMDB reviews. The scores describe the model's output;
+      they are not a token-level explanation of why individual words affected the prediction. Sarcasm, mixed opinions,
+      context, and unfamiliar wording can lead to errors.
+    </p>
+  </main>
+
+  <footer>ReelFeel · IMDB LSTM Sentiment Analyzer · Built for learning and experimentation</footer>
+
+  <script>
+    const reviewBox = document.getElementById('review');
+    const counter = document.getElementById('counter');
+    const clearBtn = document.getElementById('clearBtn');
+    const form = document.getElementById('reviewForm');
+    const confidenceFill = document.querySelector('.fill[data-confidence]');
+
+    if (confidenceFill) {
+      confidenceFill.style.width = `${confidenceFill.dataset.confidence}%`;
+    }
+
+    function updateCounter() {
+      counter.textContent = `${reviewBox.value.length} / 10000`;
+    }
+    reviewBox.addEventListener('input', updateCounter);
+    updateCounter();
+
+    document.querySelectorAll('[data-review]').forEach((button) => {
+      button.addEventListener('click', () => {
+        reviewBox.value = button.dataset.review;
+        updateCounter();
+        reviewBox.focus();
+      });
+    });
+
+    clearBtn.addEventListener('click', () => {
+      reviewBox.value = '';
+      updateCounter();
+      reviewBox.focus();
+    });
+
+    form.addEventListener('submit', (event) => {
+      if (!reviewBox.value.trim()) {
+        event.preventDefault();
+        reviewBox.focus();
+      } else {
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Analyzing…';
+      }
+    });
+  </script>
+</body>
+
+</html>
